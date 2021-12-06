@@ -21,7 +21,7 @@ MIN_MEM=16384
 
 
 function usage() {
-	echo "Usage: $0 [-s|-t] [-d] [-p] [-i docker-image] [-r]"
+	echo "Usage: $0 [-s|-t] [-d] [-p] [-i autotune-docker-image] [-o optuna-docker-image] [-r]"
 	echo "s = start (default), t = terminate"
 	echo "r = restart autotune only"
 	echo "d = Don't start experiments"
@@ -197,7 +197,11 @@ function autotune_install() {
 		./deploy.sh -c minikube -t 2>/dev/null
 		sleep 5
 		if [ -n "${AUTOTUNE_DOCKER_IMAGE}" ]; then
-			./deploy.sh -c minikube -i "${AUTOTUNE_DOCKER_IMAGE}"
+			if [ -n "${OPTUNA_DOCKER_IMAGE}"]; then
+				./deploy.sh -c minikube -i "${AUTOTUNE_DOCKER_IMAGE}" -o "${OPTUNA_DOCKER_IMAGE}"
+			else
+				./deploy.sh -c minikube -i "${AUTOTUNE_DOCKER_IMAGE}"
+			fi
 		else
 			./deploy.sh -c minikube
 		fi
@@ -345,9 +349,10 @@ prometheus=0
 autotune_restart=0
 start_demo=1
 AUTOTUNE_DOCKER_IMAGE=""
+OPTUNA_DOCKER_IMAGE=""
 EXPERIMENT_START=1
 # Iterate through the commandline options
-while getopts di:prst gopts
+while getopts dio:prst gopts
 do
 	case "${gopts}" in
 		d)
@@ -355,6 +360,9 @@ do
 			;;
 		i)
 			AUTOTUNE_DOCKER_IMAGE="${OPTARG}"
+			;;
+		o)
+			OPTUNA_DOCKER_IMAGE="${OPTARG}"
 			;;
 		p)
 			prometheus=1
